@@ -1,4 +1,11 @@
-# Raspberry Pi 3 Model B / B+
+# Raspberry Pi 3 Model B / B+ with HAT TFT (touch)screen
+
+This is a custom Nerves System for the RPi3 which can drive a HAT-style TFT screen. It
+is the same as the `rpi3` Nerves system but with a couple of extra kernel modules to drive
+various types of touchscreens.
+
+This is a work in progress, ping me for details, preferably on the Elixir-Lang Slack.
+
 
 [![CircleCI](https://circleci.com/gh/nerves-project/nerves_system_rpi3.svg?style=svg)](https://circleci.com/gh/nerves-project/nerves_system_rpi3)
 [![Hex version](https://img.shields.io/hexpm/v/nerves_system_rpi3.svg "Hex version")](https://hex.pm/packages/nerves_system_rpi3)

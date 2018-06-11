@@ -34,9 +34,9 @@ defmodule NervesSystemRpi3TftFb.MixProject do
   defp nerves_package do
     [
       type: :system,
-      #artifact_sites: [
-        #{:github_releases, "cdegroot/#{@app}"}
-      #],
+      artifact_sites: [
+        {:github_releases, "cdegroot/#{@app}"}
+      ],
       platform: Nerves.System.BR,
       platform_config: [
         defconfig: "nerves_defconfig"

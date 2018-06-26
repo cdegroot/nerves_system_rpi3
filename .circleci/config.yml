@@ -28,13 +28,6 @@ install_nerves_bootstrap: &install_nerves_bootstrap
     command: |
       mix archive.install hex nerves_bootstrap "~> 1.0" --force
 
-install_aws_cli: &install_aws_cli
-  run:
-    name: Install AWS CLI
-    command : |
-      apt update -qq
-      apt install awscli -qq -y
-
 install_ghr: &install_ghr
   run:
     name: Install ghr (Github Releases)
@@ -142,16 +135,6 @@ jobs:
           paths:
             - "/nerves/deploy/test"
 
-  deploy_test:
-    <<: *defaults
-    steps:
-      - <<: *install_aws_cli
-      - restore_cache:
-          key: nerves/deploy/test-{{ .Revision }}-{{ .Environment.CIRCLE_TAG }}
-      - deploy:
-          name: Publish notification on SNS
-          command: aws sns publish --topic-arn $AWS_SNS_TOPIC_ARN --message "$(cat /nerves/deploy/test/artifacts/${CIRCLE_SHA1}.json)"
-
   deploy_system:
     <<: *defaults
     steps:
@@ -178,10 +161,6 @@ workflows:
           context: org-global
           requires:
             - build_system
-      - deploy_test:
-          context: org-global
-          requires:
-            - build_test
       - deploy_system:
           context: org-global
           requires:

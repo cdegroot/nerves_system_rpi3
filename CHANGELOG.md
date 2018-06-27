@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.5
+
+This should be a ready-to-roll release for Uderzo applications. The modules that
+my cheap chinese TFT needs are compiled in under the assumption that these drivers
+are probably most common.
+
 ## v1.0.0
 
 This release is nearly identical to rc.2 except with the deps bump to 1.0 and

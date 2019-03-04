@@ -20,16 +20,18 @@ This is the base Nerves System configuration for the Raspberry Pi 3 Model B.
 | CPU                  | 1.2 GHz quad-core ARMv8         |
 | Memory               | 1 GB DRAM                       |
 | Storage              | MicroSD                         |
-| Linux kernel         | 4.9 w/ Raspberry Pi patches     |
+| Linux kernel         | 4.14 w/ Raspberry Pi patches    |
 | IEx terminal         | HDMI and USB keyboard (can be changed to UART) |
-| GPIO, I2C, SPI       | Yes - Elixir ALE                |
+| GPIO, I2C, SPI       | Yes - [Elixir Circuits](https://github.com/elixir-circuits) |
 | ADC                  | No                              |
 | PWM                  | Yes, but no Elixir support      |
 | UART                 | 1 available - `ttyAMA0`         |
+| Display              | HDMI or 7" RPi Touchscreen      |
 | Camera               | Yes - via rpi-userland          |
 | Ethernet             | Yes                             |
 | WiFi                 | Yes - Nerves.Network            |
 | Bluetooth            | Not supported yet               |
+| Audio                | HDMI/Stereo out                 |
 
 ## Using
 
@@ -54,6 +56,52 @@ using the wired Ethernet interface 'eth0' and DHCP.
 The base image includes drivers for the onboard Raspberry Pi 3 wifi module
 (`brcmfmac` driver).
 
+## Audio
+
+The Raspberry Pi has many options for audio output. This system supports the
+HDMI and stereo audio jack output. The Linux ALSA drivers are used for audio
+output.
+
+To try it out, run:
+
+```elixir
+:os.cmd('espeak -ven+f5 -k5 -w /tmp/out.wav Hello')
+:os.cmd('aplay -q /tmp/out.wav')
+```
+
+The general Raspberry Pi audio documentation mostly applies to Nerves. For
+example, to force audio out the HDMI port, run:
+
+```elixir
+:os.cmd('amixer cset numid=3 2')
+```
+
+Change the last argument to `amixer` to `1` to output to the stereo output jack.
+
+## Linux's preempt_rt patches
+
+If you need better real-time performance from the Linux kernel, the `preempt_rt`
+patch set may help. Be aware that we do not test with the patches so this may
+not work. To enable it, make a custom system using this one as a base and add
+the following to the `nerves_defconfig`:
+
+```text
+BR2_LINUX_KERNEL_PATCH="http://cdn.kernel.org/pub/linux/kernel/projects/rt/4.14/patch-4.14.71-rt44.patch.xz"
+```
+
+Please verify the patch version since these instructions may be out-of-date.
+
+Next, update the Linux configuration to use it. Review the Nerves documentation
+for running `make linux-menuconfig` and enable `PREEMPT_RT_FULL`. Alternately,
+make the following change to the Linux configuration:
+
+```text
+-CONFIG_PREEMPT=y
++CONFIG_PREEMPT_RT_FULL=y
+ ```
+
+Build the system and you should now have a preempt_rt kernel.
+
 ## Provisioning devices
 
 This system supports storing provisioning information in a small key-value store
@@ -66,9 +114,9 @@ function.
 
 Keys used by this system are:
 
-Key             | Example Value     | Description
-:-------------- | :---------------- | :----------
-`serial_number` | "1234578"`        | By default, this string is used to create unique hostnames and Erlang node names. If unset, it defaults to part of the Raspberry Pi's device ID.
+Key                    | Example Value     | Description
+:--------------------- | :---------------- | :----------
+`nerves_serial_number` | `"12345678"`      | By default, this string is used to create unique hostnames and Erlang node names. If unset, it defaults to part of the Raspberry Pi's device ID.
 
 The normal procedure would be to set these keys once in manufacturing or before
 deployment and then leave them alone.
@@ -77,15 +125,15 @@ For example, to provision a serial number on a running device, run the following
 and reboot:
 
 ```elixir
-iex> cmd("fw_setenv serial_number 1234")
+iex> cmd("fw_setenv nerves_serial_number 12345678")
 ```
 
 This system supports setting the serial number offline. To do this, set the
-`SERIAL_NUMBER` environment variable when burning the firmware. If you're
+`NERVES_SERIAL_NUMBER` environment variable when burning the firmware. If you're
 programming MicroSD cards using `fwup`, the commandline is:
 
 ```sh
-sudo SERIAL_NUMBER=1234 fwup path_to_firmware.fw
+sudo NERVES_SERIAL_NUMBER=12345678 fwup path_to_firmware.fw
 ```
 
 Serial numbers are stored on the MicroSD card so if the MicroSD card is
@@ -93,6 +141,12 @@ replaced, the serial number will need to be reprogrammed. The numbers are stored
 in a U-boot environment block. This is a special region that is separate from
 the application partition so reformatting the application partition will not
 lose the serial number or any other data stored in this block.
+
+Additional key value pairs can be provisioned by overriding the default provisioning.conf
+file location by setting the environment variable
+`NERVES_PROVISIONING=/path/to/provisioning.conf`. The default provisioning.conf
+will set the `nerves_serial_number`, if you override the location to this file,
+you will be responsible for setting this yourself.
 
 ## Linux kernel and RPi firmware/userland
 
